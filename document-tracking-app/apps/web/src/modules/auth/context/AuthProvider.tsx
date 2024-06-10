@@ -1,13 +1,19 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect } from 'react'
 
-import { AuthContext } from './context'
+import Splash from '#/components/splash'
 
-const AuthProvider = ({children}:{children:ReactNode}) => {
-  return (
-    <AuthContext.Provider value={{}}>
-      {children}
-    </AuthContext.Provider>
-  )
+import { useAuth } from './useAuth'
+
+const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const { refetch, isLoading, store } = useAuth()
+
+  useEffect(() => refetch(), [])
+
+  if(!store.isAuthenticated && isLoading){
+    return <Splash/>
+  }
+
+  return children
 }
 
 export default AuthProvider

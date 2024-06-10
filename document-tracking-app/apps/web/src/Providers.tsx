@@ -3,6 +3,8 @@ import { AxiosError } from "axios";
 import { ReactNode } from 'react'
 import { toast } from "sonner"
 
+import AuthProvider from "./modules/auth/context/AuthProvider";
+
 const queryResponseHandler = (error: AxiosError | any) => {
   if (error instanceof AxiosError) {
     toast.error(error.response?.data.message)
@@ -22,7 +24,9 @@ const client = new QueryClient({
 
 const Providers = ({ children }: { children: ReactNode }) => {
   return (
-    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    </AuthProvider>
   )
 }
 
