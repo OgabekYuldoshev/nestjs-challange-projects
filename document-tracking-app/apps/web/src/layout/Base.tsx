@@ -12,7 +12,7 @@ const Base = () => {
   }
 
   return (
-    <main className='w-full max-w-screen-2xl mx-auto px-2.5'>
+    <main className='w-full mx-auto'>
       <Navbar />
       <Outlet />
     </main>

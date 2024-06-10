@@ -14,6 +14,18 @@ export const router = createBrowserRouter([
           const { DashboardPage } = await import("./pages/Dashboard")
           return { Component: DashboardPage }
         }
+      },
+      {
+        path: 'doc/:id',
+        children:[
+          {
+            index: true,
+            lazy: async () => {
+              const { DocumentPage } = await import("./pages/Document")
+              return { Component: DocumentPage }
+            }
+          }
+        ]
       }
     ]
   },
