@@ -5,7 +5,7 @@ import Simple from "./layout/Simple";
 
 export const router = createBrowserRouter([
   {
-    path: 'dashboard',
+    path: '/',
     element: <Base />,
     children: [
       {
@@ -44,6 +44,6 @@ export const router = createBrowserRouter([
   },
   {
     path: '*',
-    element: <Navigate to="/dashboard" />,
+    element: <Navigate to="/" />,
   }
 ])
