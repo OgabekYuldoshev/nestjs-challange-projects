@@ -107,6 +107,9 @@ export class Room {
         return await this.createWebrtcTransport(client.id)
       case 'GET_PEERS_LIST':
         return await this.getPeersList(client)
+      case 'RESUME_CONSUMER':
+        const { consumerId } = payload.data as { consumerId: string }
+        return await this.resume(consumerId, client)
       case 'CONNECT_TRANSPORT':
         const { transportId, dtlsParameters } = payload.data as {
           transportId: string
@@ -119,7 +122,7 @@ export class Room {
         )
       case 'PRODUCE':
         const produceValue = payload.data as {
-          producerId: string
+          transportId: string
           kind: MediaKind
           rtpParameters: RtpParameters
         }
@@ -127,22 +130,29 @@ export class Room {
       case 'CONSUME':
         const consumeValue = payload.data as {
           producerId: string
-          consumerId: string
+          transportId: string
           rtpCapabilities: RtpCapabilities
         }
         return await this.consume({ client, ...consumeValue })
     }
   }
 
+  async resume(consumerId: string, client: Socket) {
+    const peer = this.peers.get(client.id)
+    const consumer = peer.consumers.get(consumerId)
+    await consumer.resume()
+    return { status: 'ok' }
+  }
+
   async consume({
     client,
     producerId,
-    consumerId,
+    transportId,
     rtpCapabilities,
   }: {
     client: Socket
     producerId: string
-    consumerId: string
+    transportId: string
     rtpCapabilities: RtpCapabilities
   }) {
     const isValid = this.router.canConsume({
@@ -155,7 +165,7 @@ export class Room {
 
     const { consumer, params } = await this.peers
       .get(client.id)
-      .createConsumer({ producerId, consumerId, rtpCapabilities })
+      .createConsumer({ producerId, transportId, rtpCapabilities })
 
     consumer.on(
       'producerclose',
@@ -175,12 +185,12 @@ export class Room {
 
   async produce({
     client,
-    producerId,
+    transportId,
     kind,
     rtpParameters,
   }: {
     client: Socket
-    producerId: string
+    transportId: string
     kind: MediaKind
     rtpParameters: RtpParameters
   }) {
@@ -191,7 +201,7 @@ export class Room {
     }
 
     const producer = await peer.createProducer({
-      producerId,
+      transportId,
       kind,
       rtpParameters,
     })

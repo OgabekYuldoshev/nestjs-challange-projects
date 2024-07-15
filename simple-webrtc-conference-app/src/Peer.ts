@@ -25,15 +25,15 @@ export class Peer {
   }
 
   async createConsumer({
-    consumerId,
+    transportId,
     producerId,
     rtpCapabilities,
   }: {
-    consumerId: string
+    transportId: string
     producerId: string
     rtpCapabilities: types.RtpCapabilities
   }) {
-    const consumerTransport = await this.transports.get(consumerId)
+    const consumerTransport = await this.transports.get(transportId)
 
     if (!consumerTransport) {
       return { error: 'Consumer transport not found' }
@@ -42,10 +42,8 @@ export class Peer {
     const consumer = await consumerTransport.consume({
       producerId,
       rtpCapabilities,
-      paused: false,
+      paused: true,
     })
-
-    console.log(consumer)
 
     if (consumer.type === 'simulcast') {
       await consumer.setPreferredLayers({
@@ -56,16 +54,13 @@ export class Peer {
 
     this.consumers.set(consumer.id, consumer)
 
-    consumer.on(
-      'transportclose',
-      function () {
-        console.log('Consumer transport close', {
-          name: `${this.name}`,
-          consumer_id: `${consumer.id}`,
-        })
-        this.consumers.delete(consumer.id)
-      }.bind(this),
-    )
+    consumer.on('transportclose', () => {
+      console.log('Consumer closed due to transportclose event', {
+        name: this.uuid,
+        consumer_id: `${consumer.id}`,
+      })
+      this.consumers.delete(consumer.id)
+    })
 
     return {
       consumer,
@@ -81,32 +76,28 @@ export class Peer {
   }
 
   async createProducer({
-    producerId,
+    transportId,
     kind,
     rtpParameters,
   }: {
-    producerId: string
+    transportId: string
     kind: MediaKind
     rtpParameters: RtpParameters
   }) {
-    const producer = await this.transports.get(producerId).produce({
+    const producer = await this.transports.get(transportId).produce({
       kind,
       rtpParameters,
     })
 
     this.producers.set(producer.id, producer)
 
-    producer.on(
-      'transportclose',
-      function () {
-        console.log('Producer transport close', {
-          name: `${this.name}`,
-          consumer_id: `${producer.id}`,
-        })
-        producer.close()
-        this.producers.delete(producer.id)
-      }.bind(this),
-    )
+    producer.on('transportclose', () => {
+      console.log('Producer transport close', {
+        name: this.uuid,
+        consumer_id: `${producer.id}`,
+      })
+      this.producers.delete(producer.id)
+    })
 
     return producer
   }
